@@ -1,3 +1,4 @@
+const postsRepo = require('../repositories/posts');
 /**
  * Chamando os arrays vazios de um terceiro arquivo
  */

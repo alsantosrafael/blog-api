@@ -1,3 +1,4 @@
+const autoresRepo = require('../repositories/autores');
 const { autores } = require('../utils/general');
 const response = require('./response');
 const { obterPostsDeAutor } = require('./posts');
@@ -52,6 +53,7 @@ const adicionarAutor = (ctx) => {
  * Função que atualiza um autor
  */
 const atualizarAutor = (ctx) => {
+	// Procurar o id do autor que foi atualizado no banco de dados e retorná-lo
 	const { id } = ctx.params;
 	const { body } = ctx.request;
 
