@@ -1,135 +1,136 @@
 const postsRepo = require('../repositories/posts');
-/**
- * Chamando os arrays vazios de um terceiro arquivo
- */
-const { autores, posts } = require('../utils/general');
-
 const response = require('./response');
-
 /**
- * Obtém posts de autor específico ao se passar seu id
+ * Obtém post específico ao passar seu id
  */
-const obterPostsDeAutor = (autorId, ctx = null) => {
-	const postsDoAutor = posts.filter((post) => {
-		return post.autor === autorId && post.deletado === false;
-	});
-
-	response(ctx, postsDoAutor);
+const obterPost = async (ctx) => {
+	const { id = null } = ctx.params;
+	if (!id) {
+		return response(ctx, 'Pedido mal formatado', 400);
+	}
+	const post = await postsRepo.obterPost(id);
+	if (post) {
+		if (!post.deletado) {
+			return response(ctx, post, 200);
+		}
+		return response(ctx, 'Post foi deletado.', 401);
+	}
+	return response(ctx, 'Post não encontrado', 404);
 };
+
 /**
  * Obtém todos os posts
  */
-const obterPosts = (ctx) => {
-	response(
-		ctx,
-		posts.filter((post) => !post.deletado && !post.publicado),
-		200
-	);
+const obterPosts = async (ctx) => {
+	const listaPosts = await postsRepo.obterPosts();
+	const { autor = null } = ctx.query;
+
+	if (!autor) {
+		if (listaPosts) {
+			return response(ctx, listaPosts, 200);
+		}
+		return response(ctx, 'Posts não encontrados.', 404);
+	}
+	const postsAutor = postsRepo.obterPostsAutor(autor);
+	if (postsAutor) {
+		return response(ctx, postsAutor, 200);
+	}
+	return response(ctx, 'Não há posts do autor buscado!', 404);
 };
 /**
  * Adiciona post
  */
-const adicionarPost = (ctx) => {
-	const { body } = ctx.request;
+const adicionarPost = async (ctx) => {
+	await postsRepo.criarTabela();
+	const {
+		titulo = null,
+		conteudo = null,
+		subtitulo = null,
+		autor = null,
+	} = ctx.request.body;
 
-	if (!body.titulo || !body.conteudo || !body.subtitulo || !body.autor) {
-		response(ctx, 'Pedido mal-formatado', 400);
-		return;
-	}
-	if (autores[body.autor - 1].deletado === true) {
-		response(ctx, 'Pedido proibido', 403);
-		return;
+	if (!titulo || !conteudo || !subtitulo || !autor) {
+		return response(ctx, 'Pedido mal-formatado', 400);
 	}
 
 	const post = {
-		id: posts.length + 1,
-		titulo: body.titulo,
-		conteudo: body.conteudo,
-		subtitulo: body.subtitulo,
-		autor: body.autor,
-		publicado: false,
-		deletado: false,
+		titulo,
+		subtitulo,
+		conteudo,
+		autor,
 	};
 
-	posts.unshift(post);
+	const listaPosts = await postsRepo.obterPosts();
 
-	response(ctx, post);
+	listaPosts.forEach((p) => {
+		if (p.titulo === post.titulo) {
+			return response(ctx, 'Já existe um Post com esse título', 401);
+		}
+		return false;
+	});
+	const postCriado = await postsRepo.criarPost(post);
+	return response(ctx, postCriado, 201);
 };
 /**
  * Atualiza post
  */
-const atualizarPost = (ctx) => {
-	const id = ctx.url.split('/')[2];
-	const { body } = ctx.request;
+const atualizarPost = async (ctx) => {
+	const { id = null } = ctx.params;
+	const {
+		titulo = null,
+		subtitulo = null,
+		conteudo = null,
+		publicado = false,
+	} = ctx.request.body;
 
 	if (
-		(!body.conteudo && !body.titulo && !body.subtitulo) ||
-		typeof body.publicado !== 'boolean'
+		(!conteudo && !titulo && !subtitulo && !publicado) ||
+		typeof publicado !== 'boolean'
 	) {
-		response(ctx, 'Pedido mal-formatado', 400);
-		return;
+		return response(ctx, 'Pedido mal-formatado', 400);
 	}
 
 	if (id) {
-		const postAtual = posts[id - 1];
+		const postAtual = await postsRepo.obterPost(id);
 		if (postAtual) {
 			const postAtualizado = {
-				id: Number(id),
-				conteudo: body.conteudo ? body.conteudo : postAtual.conteudo,
-				titulo: body.titulo ? body.titulo : postAtual.titulo,
-				subtitulo: body.subtitulo
-					? body.subtitulo
-					: postAtual.subtitulo,
-				senha: body.senha ? body.senha : postAtual.senha,
-				autor: postAtual.autor,
-				publicado: !!body.publicado,
-				deletado: postAtual.deletado,
+				id: postAtual.id,
+				conteudo: conteudo || postAtual.conteudo,
+				titulo: titulo || postAtual.titulo,
+				subtitulo: subtitulo || postAtual.subtitulo,
+				publicado: publicado || postAtual.publicado,
 			};
 
-			posts[id - 1] = postAtualizado;
-
-			response(ctx, postAtualizado);
+			return response(ctx, postAtualizado);
 		}
-	} else {
-		response(ctx, 'Autor não encontrado', 404);
+		return response(ctx, 'Post não encontrado', 404);
 	}
+	return response(ctx, 'Pedido mal formatado', 400);
 };
 /**
  * Deleta post
  */
-const deletarPost = (ctx) => {
-	const id = ctx.url.split('/')[2];
-	const { body } = ctx.request;
+const deletarPost = async (ctx) => {
+	const { id = null } = ctx.params;
+	const { estado } = ctx.request.body;
 
-	if (typeof body.estado !== 'boolean') {
-		response(ctx, 'Pedido mal-formatado', 400);
-		return;
+	if (typeof estado !== 'boolean') {
+		return response(ctx, 'Pedido mal-formatado', 400);
 	}
 
 	if (id) {
-		const postAtual = posts[id - 1];
+		const postAtual = await postsRepo.obterPost(id);
 		if (postAtual) {
-			const postAtualizado = {
-				id: postAtual.id,
-				titulo: postAtual.titulo,
-				subtitulo: postAtual.subtitulo,
-				conteudo: postAtual.conteudo,
-				autor: postAtual.autor,
-				publicado: postAtual.publicado,
-				deletado: body.estado,
-			};
-
-			posts[id - 1] = postAtualizado;
-
-			response(ctx, postAtualizado);
+			postsRepo.deletarPost(id);
+			return response(ctx, postAtual, 200);
 		}
-	} else {
-		response(ctx, 'Post não encontrado', 404);
+		return response(ctx, 'Post não encontrado', 404);
 	}
+	return response(ctx, 'Pedido mal formatado', 400);
 };
 
 module.exports = {
-	obterPostsDeAutor,
+	obterPost,
 	obterPosts,
 	adicionarPost,
 	atualizarPost,

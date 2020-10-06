@@ -1,8 +1,8 @@
 const db = require('../utils/database');
 
-const dropTabela = async () => {
-	return db.query('DROP TABLE autores;');
-};
+// const dropTabela = async () => {
+// return db.query('DROP TABLE autores;');
+// };
 
 const criarTabela = async () => {
 	const query = `CREATE TABLE IF NOT EXISTS posts (
@@ -18,6 +18,7 @@ const criarTabela = async () => {
 };
 
 const criarPost = async (post) => {
+	await criarTabela();
 	const { titulo, subtitulo, conteudo, autor, publicado, deletado } = post;
 	const query = {
 		text: `INSERT INTO posts
@@ -37,10 +38,28 @@ const obterPost = async (idPost) => {
 	return result.rows.shift();
 };
 
-const obterPostsUsuario = async (idAutor) => {
+const obterPosts = async () => {
 	const query = {
-		text: `SELECT * FROM posts WHERE autor = $1 AND deletado = false AND publicado = true`,
+		text: `SELECT * FROM posts WHERE deletado = false`,
+	};
+	const result = await db.query(query);
+	return result.rows;
+};
+
+const obterPostsAutor = async (idAutor = null) => {
+	if (!idAutor) {
+		return null;
+	}
+	const query = {
+		text: `SELECT * FROM posts WHERE autor = $1 AND DELETADO = false`,
 		values: [idAutor],
+	};
+	const result = await db.query(query);
+	return result.rows;
+};
+const obterPostsPublicados = async () => {
+	const query = {
+		text: `SELECT * FROM posts WHERE deletado = false AND publicado = true `,
 	};
 	const result = await db.query(query);
 	return result.rows;
@@ -55,28 +74,31 @@ const atualizarPost = async (idPost, postAtualizado) => {
 		conteudo = $3,
 		autor = $4
 		publicado = $5
-		WHERE id = $6 AND deletado = FALSE`,
+		WHERE id = $6 AND deletado = FALSE RETURNING *`,
 		values: [titulo, subtitulo, conteudo, autor, publicado, idPost],
 	};
 	const result = await db.query(query);
-	return result;
+	return result.rows.shift();
 };
 
 const deletarPost = async (idPost) => {
 	const query = {
 		text: `UPDATE posts
 		SET deletado = true
-		WHERE id = $1`,
+		WHERE id = $1 RETURNING *`,
 		values: [idPost],
 	};
 	const result = await db.query(query);
-	return result;
+	return result.rows.shift();
 };
 
 module.exports = {
+	criarTabela,
 	criarPost,
 	obterPost,
-	obterPostsUsuario,
+	obterPosts,
+	obterPostsAutor,
+	obterPostsPublicados,
 	atualizarPost,
 	deletarPost,
 };

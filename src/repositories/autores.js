@@ -1,8 +1,8 @@
 const db = require('../utils/database');
 
-const dropTabela = async () => {
-	return db.query('DROP TABLE autores;');
-};
+// const dropTabela = async () => {
+// return db.query('DROP TABLE autores;');
+// };
 
 const criarTabela = async () => {
 	const query = `CREATE TABLE IF NOT EXISTS autores (
@@ -17,6 +17,7 @@ const criarTabela = async () => {
 };
 
 const criarAutor = async (autor) => {
+	await criarTabela();
 	const { nome, sobrenome, email, senha, deletado } = autor;
 	const query = {
 		text: `INSERT INTO autores
@@ -73,6 +74,7 @@ const deletarAutor = async (id) => {
 };
 
 module.exports = {
+	criarTabela,
 	criarAutor,
 	obterAutor,
 	obterAutores,

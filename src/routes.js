@@ -9,10 +9,10 @@ const {
 	adicionarAutor,
 	atualizarAutor,
 	deletarAutor,
-} = require('./controllers/authors');
+} = require('./controllers/autores');
 
 const {
-	obterPostsDeAutor,
+	obterPost,
 	obterPosts,
 	adicionarPost,
 	atualizarPost,
@@ -30,7 +30,7 @@ router.delete('/autor/:id', deletarAutor);
 // Rotas de Posts
 
 router.get('/posts', obterPosts);
-router.get('/posts/:id', obterPostsDeAutor);
+router.get('/posts/:id', obterPost);
 router.post('/posts', adicionarPost);
 router.put('/posts/:id', atualizarPost);
 router.delete('/posts/:id', deletarPost);
