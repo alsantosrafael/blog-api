@@ -37,7 +37,6 @@ const obterAutor = async (ctx) => {
  * Função que adiciona um novo autor
  */
 const adicionarAutor = async (ctx) => {
-	await autoresRepo.criarTabela();
 	const {
 		nome = null,
 		sobrenome = null,
@@ -45,23 +44,19 @@ const adicionarAutor = async (ctx) => {
 		senha = null,
 	} = ctx.request.body;
 
-	const listaAutores = autoresRepo.obterAutores();
-
 	if (!nome || !sobrenome || !email || !senha) {
 		return response(ctx, 'Pedido mal-formatado', 400);
 	}
 
-	listaAutores.forEach((autor) => {
-		if (autor.email === email) {
-			return response(
-				ctx,
-				'O email do autor em criação já está registrado!',
-				401
-			);
-		}
-		return false;
-	});
+	const existeAutor = await autoresRepo.obterAutorPorEmail(email);
 
+	if (existeAutor) {
+		return response(
+			ctx,
+			'O email do autor em criação já está registrado!',
+			400
+		);
+	}
 	const autor = {
 		nome,
 		sobrenome,
@@ -88,11 +83,11 @@ const atualizarAutor = async (ctx) => {
 		const autorAtual = await autoresRepo.obterAutor(id);
 		if (autorAtual) {
 			const autorAtualizado = {
+				...autorAtual,
 				nome: nome || autorAtual.nome,
 				sobrenome: sobrenome || autorAtual.sobrenome,
 				email: email || autorAtual.email,
 				senha: senha || autorAtual.senha,
-				...autorAtual,
 			};
 			const result = await autoresRepo.atualizarAutor(autorAtualizado);
 			return response(ctx, result, 200);
@@ -120,7 +115,7 @@ const deletarAutor = async (ctx) => {
 				return response(ctx, 'Ação proibida', 403);
 			}
 
-			const result = await autoresRepo.deletarAutor(id);
+			const result = await autoresRepo.deletarAutor(id, estado);
 			return response(ctx, result, 200);
 		}
 	}

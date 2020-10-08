@@ -1,49 +1,32 @@
 const db = require('../utils/database');
 
-// const dropTabela = async () => {
-// return db.query('DROP TABLE autores;');
-// };
-
-const criarTabela = async () => {
-	const query = `CREATE TABLE IF NOT EXISTS posts (
-	id SERIAL,
-	titulo TEXT,
-	subtitulo: TEXT,
-	conteudo: TEXT,
-	autor: SERIAL,
-	publicado: bool DEFAULT FALSE,
-	deletado: bool DEFAULT FALSE,
-	)`;
-	return db.query(query);
-};
-
 const criarPost = async (post) => {
-	await criarTabela();
-	const { titulo, subtitulo, conteudo, autor, publicado, deletado } = post;
+	const { titulo, subtitulo, conteudo, autor } = post;
 	const query = {
 		text: `INSERT INTO posts
-		(titulo, subtitulo, conteudo, autor, publicado, deletado) 
-		VALUES ($1, $2, $3, $4, FALSE, FALSE) RETURNING *`,
-		values: [titulo, subtitulo, conteudo, autor, publicado, deletado],
+		(titulo, subtitulo, conteudo, autor) 
+		VALUES ($1, $2, $3, $4) RETURNING *`,
+		values: [titulo, subtitulo, conteudo, autor],
 	};
 	const result = await db.query(query);
 	return result.rows.shift();
 };
 const obterPost = async (idPost) => {
 	const query = {
-		text: `SELECT * FROM posts WHERE id = $1 AND deletado = false AND publicado = true`,
+		text: `SELECT * FROM posts WHERE id = $1`,
 		values: [idPost],
 	};
 	const result = await db.query(query);
 	return result.rows.shift();
 };
 
-const obterPosts = async () => {
+const obterPosts = async (deletado = false, publicado = true) => {
 	const query = {
-		text: `SELECT * FROM posts WHERE deletado = false`,
+		text: `SELECT * FROM posts WHERE deletado = $1 AND publicado = $2`,
+		values: [deletado, publicado],
 	};
 	const result = await db.query(query);
-	return result.rows;
+	return result.rows.shift();
 };
 
 const obterPostsAutor = async (idAutor = null) => {
@@ -66,34 +49,35 @@ const obterPostsPublicados = async () => {
 };
 
 const atualizarPost = async (idPost, postAtualizado) => {
-	const { titulo, subtitulo, conteudo, autor, publicado } = postAtualizado;
+	const { titulo, subtitulo, conteudo, publicado } = postAtualizado;
 	const query = {
 		text: `UPDATE posts
 		SET titulo = $1,
 		subtitulo = $2,
 		conteudo = $3,
-		autor = $4
-		publicado = $5
-		WHERE id = $6 AND deletado = FALSE RETURNING *`,
-		values: [titulo, subtitulo, conteudo, autor, publicado, idPost],
+		publicado = $4
+		WHERE id = $5 RETURNING *`,
+		values: [titulo, subtitulo, conteudo, publicado, idPost],
 	};
 	const result = await db.query(query);
 	return result.rows.shift();
 };
 
-const deletarPost = async (idPost) => {
+const deletarPost = async (idPost, estado) => {
+	if (!estado) {
+		return null;
+	}
 	const query = {
 		text: `UPDATE posts
-		SET deletado = true
-		WHERE id = $1 RETURNING *`,
-		values: [idPost],
+		SET deletado = $1
+		WHERE id = $2 RETURNING *`,
+		values: [estado, idPost],
 	};
 	const result = await db.query(query);
 	return result.rows.shift();
 };
 
 module.exports = {
-	criarTabela,
 	criarPost,
 	obterPost,
 	obterPosts,

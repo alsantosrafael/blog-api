@@ -8,7 +8,7 @@ const obterPost = async (ctx) => {
 	if (!id) {
 		return response(ctx, 'Pedido mal formatado', 400);
 	}
-	const post = await postsRepo.obterPost(id);
+	const post = await postsRepo.obterPost(Number(id));
 	if (post) {
 		if (!post.deletado) {
 			return response(ctx, post, 200);
@@ -41,7 +41,6 @@ const obterPosts = async (ctx) => {
  * Adiciona post
  */
 const adicionarPost = async (ctx) => {
-	await postsRepo.criarTabela();
 	const {
 		titulo = null,
 		conteudo = null,
@@ -60,14 +59,6 @@ const adicionarPost = async (ctx) => {
 		autor,
 	};
 
-	const listaPosts = await postsRepo.obterPosts();
-
-	listaPosts.forEach((p) => {
-		if (p.titulo === post.titulo) {
-			return response(ctx, 'Já existe um Post com esse título', 401);
-		}
-		return false;
-	});
 	const postCriado = await postsRepo.criarPost(post);
 	return response(ctx, postCriado, 201);
 };
@@ -91,13 +82,13 @@ const atualizarPost = async (ctx) => {
 	}
 
 	if (id) {
-		const postAtual = await postsRepo.obterPost(id);
+		const postAtual = await postsRepo.obterPost(Number(id));
 		if (postAtual) {
 			const postAtualizado = {
 				id: postAtual.id,
-				conteudo: conteudo || postAtual.conteudo,
 				titulo: titulo || postAtual.titulo,
 				subtitulo: subtitulo || postAtual.subtitulo,
+				conteudo: conteudo || postAtual.conteudo,
 				publicado: publicado || postAtual.publicado,
 			};
 
@@ -121,7 +112,7 @@ const deletarPost = async (ctx) => {
 	if (id) {
 		const postAtual = await postsRepo.obterPost(id);
 		if (postAtual) {
-			postsRepo.deletarPost(id);
+			postsRepo.deletarPost(id, estado);
 			return response(ctx, postAtual, 200);
 		}
 		return response(ctx, 'Post não encontrado', 404);
