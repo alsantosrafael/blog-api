@@ -33,7 +33,7 @@ const drop = async (tableName) => {
  * eu vou rodar. Se eu não passar um número, então todas as queries de schema
  * uma a uma serão rodadas.
  */
-const up = async (num) => {
+const up = async (num = null) => {
 	if (!num) {
 		for (const value in schema) {
 			await database.query({ text: schema[value] });
@@ -45,3 +45,5 @@ const up = async (num) => {
 };
 
 up();
+
+// drop('posts');

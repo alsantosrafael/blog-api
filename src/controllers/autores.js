@@ -1,8 +1,7 @@
 const autoresRepo = require('../repositories/autores');
-// const { autores } = require('../utils/general');
+
 const postsRepo = require('../repositories/posts');
 const response = require('./response');
-// const { obterPostsDeAutor } = require('./posts');
 
 /**
  * Função que mostra os autores
@@ -37,31 +36,24 @@ const obterAutor = async (ctx) => {
  * Função que adiciona um novo autor
  */
 const adicionarAutor = async (ctx) => {
-	const {
-		nome = null,
-		sobrenome = null,
-		email = null,
-		senha = null,
-	} = ctx.request.body;
-
-	if (!nome || !sobrenome || !email || !senha) {
+	const { nome = null, sobrenome = null, email = null } = ctx.request.body;
+	// O encriptador fez seu trabalho e armazenou a senha codificada no ctx.state
+	const { hash } = ctx.state;
+	if (!nome || !sobrenome || !email) {
 		return response(ctx, 'Pedido mal-formatado', 400);
 	}
 
 	const existeAutor = await autoresRepo.obterAutorPorEmail(email);
 
 	if (existeAutor) {
-		return response(
-			ctx,
-			'O email do autor em criação já está registrado!',
-			400
-		);
+		return response(ctx, 'O email já está registrado!', 400);
 	}
+
 	const autor = {
 		nome,
 		sobrenome,
 		email,
-		senha,
+		senha: hash,
 	};
 
 	const novoAutor = await autoresRepo.criarAutor(autor);
@@ -89,7 +81,10 @@ const atualizarAutor = async (ctx) => {
 				email: email || autorAtual.email,
 				senha: senha || autorAtual.senha,
 			};
-			const result = await autoresRepo.atualizarAutor(autorAtualizado);
+			const result = await autoresRepo.atualizarAutor(
+				id,
+				autorAtualizado
+			);
 			return response(ctx, result, 200);
 		}
 		return response(ctx, 'Autor não encontrado', 404);

@@ -52,7 +52,7 @@ const atualizarAutor = async (id, autorAtualizado) => {
 		sobrenome = $2, 
 		email = $3,
 		senha = $4
-		WHERE id = $5`,
+		WHERE id = $5 RETURNING *`,
 		values: [nome, sobrenome, email, senha, id],
 	};
 	const result = await db.query(query);
