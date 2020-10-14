@@ -11,10 +11,10 @@ const encrypt = async (senha) => {
 
 // Função anônima de auto execução só para teste das funções anteriores
 // (async () => {
-// 	const hash = await encrypt('102030');
-// 	console.log('O hash é: ', hash);
-// 	const comparison = await check('102030', hash);
-// 	console.log('A resposta é: ', comparison);
+// const hash = await encrypt('102030');
+// console.log('O hash é: ', hash);
+// const comparison = await check('102030', hash);
+// console.log('A resposta é: ', comparison);
 // })();
 
 module.exports = { check, encrypt };

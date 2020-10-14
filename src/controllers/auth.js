@@ -1,6 +1,9 @@
+const jwt = require('jsonwebtoken');
 const response = require('./response');
 const Autores = require('../repositories/autores');
 const Password = require('../utils/password');
+
+require('dotenv').config();
 
 const autenticar = async (ctx) => {
 	const { email = null, senha = null } = ctx.request.body;
@@ -13,7 +16,14 @@ const autenticar = async (ctx) => {
 	if (autor) {
 		const compara = await Password.check(senha, autor.senha);
 		if (compara) {
-			return response(ctx, 'Sucesso!', 200);
+			const token = await jwt.sign(
+				{ id: autor.id, email: autor.email },
+				process.env.JWT_SECRET || 'cubosacademy',
+				{
+					expiresIn: '1h',
+				}
+			);
+			return response(ctx, { token }, 200);
 		}
 		return response(ctx, 'Email e/ou Senha errad@s!', 401);
 	}
