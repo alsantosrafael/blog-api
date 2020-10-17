@@ -4,6 +4,8 @@ const router = new Router();
 const Auth = require('./controllers/auth');
 const Password = require('./middlewares/encrypt');
 const Session = require('./middlewares/session');
+const Payments = require('./controllers/payment');
+
 const {
 	obterAutores,
 	obterAutor,
@@ -23,6 +25,10 @@ const {
 // Rota de autenticação
 
 router.post('/auth', Auth.autenticar);
+
+// Rota de criação de transação
+
+router.post('/payment', Session.verify, Payments.payment);
 
 // Rotas de Autores
 

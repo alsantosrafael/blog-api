@@ -18,7 +18,21 @@ const schema = {
 			publicado BOOL DEFAULT FALSE,
 			deletado BOOL DEFAULT FALSE 
 	);`,
+	3: `CREATE TABLE IF NOT EXISTS credit_cards (
+		id SERIAL,
+		autor_id NUMBER NOT NULL,
+		first_digits TEXT NOT NULL,
+		last_digits TEXT NOT NULL,
+		card_hash TEXT NOT NULL,
+		brand TEXT NOT NULL,
+		holder_name TEXT NOT NULL,
+	);`,
+	4: `CREATE TABLE IF NOT EXISTS transactions (
+		id SERIAL,
+
+	);`,
 };
+
 /**
  * Função que elimina uma tabela
  */
